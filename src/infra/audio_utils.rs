@@ -64,8 +64,8 @@ pub fn create_codec_by_name(name: &str) -> Result<codec::Audio> {
         .audio()?)
 }
 
-/// 根据文件路径创建编码器，并配置输出上下文
-/// @param path 文件路径
+/// 创建编码器，并配置输出上下文
+/// @param codec 音频编码
 /// @param output_ctx 输出媒体文件上下文
 /// @param channels 通道数
 /// @param sample_rate 采样率

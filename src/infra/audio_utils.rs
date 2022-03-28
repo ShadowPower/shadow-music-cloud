@@ -9,11 +9,7 @@ use ffmpeg::{codec, decoder, encoder, format, media, Stream};
 /// @param input_ctx 输入媒体文件上下文
 /// @return 最佳音频流索引
 pub fn get_best_audio_stream_index(input_ctx: &format::context::Input) -> Option<usize> {
-    let input = input_ctx.streams().best(media::Type::Audio);
-    match input {
-        Some(stream) => Some(stream.index()),
-        None => None,
-    }
+    input_ctx.streams().best(media::Type::Audio).map(|stream| stream.index())
 }
 
 // ---- 用于转码 ----

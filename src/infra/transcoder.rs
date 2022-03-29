@@ -3,19 +3,42 @@ extern crate ffmpeg_next as ffmpeg;
 use std::path::Path;
 
 use anyhow::{Ok, Result};
-use ffmpeg::{format, frame, Packet, decoder, encoder};
+use ffmpeg::{format, frame, Packet, decoder, encoder, filter};
 
-use super::audio_utils;
+use super::{audio_utils, audio_filter};
 
 pub struct Transcoder {
-    codec: Option<String>,
-    channels: Option<i32>,
-    sample_rate: Option<i32>,
-    bit_rate: Option<usize>,
-    max_bit_rate: Option<usize>,
+    pub codec: Option<String>,
+    pub channels: Option<i32>,
+    pub sample_rate: Option<i32>,
+    pub bit_rate: Option<usize>,
+    pub max_bit_rate: Option<usize>,
 }
 
 impl Transcoder {
+    fn process_filtered_frames(
+        filter: &mut filter::Graph,
+        decoder: &mut decoder::Audio,
+        encoder: &mut encoder::Audio,
+        output_time_base: ffmpeg::Rational,
+        output_ctx: &mut format::context::Output
+    ) -> Result<()> {
+        let mut filtered = frame::Audio::empty();
+        // 从音频滤镜接收解码后的帧
+        while filter
+            .get("out")
+            .unwrap()
+            .sink()
+            .frame(&mut filtered)
+            .is_ok()
+        {
+            // 发送给编码器处理
+            encoder.send_frame(&filtered)?;
+            Transcoder::receive_and_process_encoded_packet(decoder, encoder, output_time_base, output_ctx)?;
+        }
+        Ok(())
+    }
+
     fn receive_and_process_encoded_packet(
         decoder: &mut decoder::Audio,
         encoder: &mut encoder::Audio,
@@ -34,6 +57,7 @@ impl Transcoder {
 
     fn receive_and_process_decoded_frame (
         decoder: &mut decoder::Audio,
+        filter: &mut filter::Graph,
         encoder: &mut encoder::Audio,
         output_time_base: ffmpeg::Rational,
         output_ctx: &mut format::context::Output
@@ -44,9 +68,9 @@ impl Transcoder {
             let timestamp = decoded.timestamp();
             decoded.set_pts(timestamp);
 
-            // 发送给编码器
-            encoder.send_frame(&decoded)?;
-            Transcoder::receive_and_process_encoded_packet(decoder, encoder, output_time_base, output_ctx)?;
+            // 发送给音频滤镜
+            filter.get("in").unwrap().source().flush().unwrap();
+            Transcoder::process_filtered_frames(filter, decoder, encoder, output_time_base, output_ctx)?;
         }
         Ok(())
     }
@@ -79,6 +103,8 @@ impl Transcoder {
         output_ctx.set_metadata(input_ctx.metadata().to_owned());
         output_ctx.write_header()?;
 
+        let mut filter = audio_filter::filter("anull", &mut decoder, &mut encoder)?;
+
         // 开始转码
         for (stream, mut packet) in input_ctx.packets() {
             // 取出容器内的音频数据
@@ -86,13 +112,17 @@ impl Transcoder {
                 // 转换时间基
                 packet.rescale_ts(stream.time_base(), decoder.time_base());
                 decoder.send_packet(&packet)?;
-                Transcoder::receive_and_process_decoded_frame(&mut decoder, &mut encoder, output_time_base, &mut output_ctx)?;
+                Transcoder::receive_and_process_decoded_frame(&mut decoder, &mut filter, &mut encoder, output_time_base, &mut output_ctx)?;
             }
         }
 
         // 解码结束
         decoder.send_eof()?;
-        Transcoder::receive_and_process_decoded_frame(&mut decoder, &mut encoder, output_time_base, &mut output_ctx)?;
+        Transcoder::receive_and_process_decoded_frame(&mut decoder, &mut filter, &mut encoder, output_time_base, &mut output_ctx)?;
+
+        // flush filter
+        filter.get("in").unwrap().source().flush()?;
+        Transcoder::process_filtered_frames(&mut filter, &mut decoder, &mut encoder, output_time_base, &mut output_ctx)?;
 
         // 编码结束
         encoder.send_eof()?;

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -7,8 +8,13 @@ use anyhow::Result;
 use radix_fmt::radix;
 use rayon::prelude::*;
 
-use shadow_music_cloud::{model::dto::FileInfo, command::actor::act, action};
 use shadow_music_cloud::repository::file_info;
+use shadow_music_cloud::{
+    action,
+    command::actor::act,
+    infra::transcoder::{self},
+    model::dto::FileInfo,
+};
 use shadow_music_cloud::{
     command::{
         action::{Action, ContextData},
@@ -71,6 +77,35 @@ fn test_audio_hash() -> Result<()> {
             Ok(hash) => println!("{}", base62::encode(hash)),
             Err(e) => println!("{}", e),
         }
+    });
+    Ok(())
+}
+
+#[test]
+fn test_audio_transcode() -> Result<()> {
+    let audio_file_info_list = file_utils::list_audio_file();
+    audio_file_info_list.par_iter().for_each(|audio_file_info| {
+        let mut path = PathBuf::new();
+        path.push(Path::new(app_config::AUDIO_PATH));
+        path.push(audio_file_info.path.clone());
+        println!("{}", audio_file_info.path.display());
+        let transcoder = transcoder::Transcoder {
+            codec: Some("libopus".to_string()),
+            channels: None,
+            sample_rate: Some(48000),
+            bit_rate: Some(96000),
+            max_bit_rate: Some(96000),
+        };
+
+        let mut output_path = PathBuf::new();
+        output_path.push(Path::new(app_config::OTHER_AUDIO_QUALITY_PATH));
+
+        fs::create_dir_all(&output_path).unwrap();
+
+        let mut output_file_path = audio_file_info.path.clone();
+        output_file_path.set_extension("opus");
+        output_path.push(output_file_path);
+        transcoder.transcode(&path, &output_path).unwrap();
     });
     Ok(())
 }

@@ -14,13 +14,6 @@ pub fn get_best_audio_stream_index(input_ctx: &format::context::Input) -> Option
 
 // ---- 用于转码 ----
 
-/// 使用 FFmpeg 打开文件
-/// @param file_path 文件路径
-/// @return 文件上下文
-pub fn open_input_file<P: AsRef<Path>>(path: &P) -> Result<format::context::Input> {
-    Ok(format::input(path)?)
-}
-
 /// 获取最佳音频流
 /// @param input_ctx 输入媒体文件上下文
 /// @return 最佳音频流
@@ -67,7 +60,7 @@ pub fn create_codec_by_name(name: &str) -> Result<codec::Audio> {
 /// @param sample_rate 采样率
 /// @param bit_rate 码率
 /// @param max_bit_rate 最大码率
-/// @return 编码器
+/// @return 编码器，输出流
 pub fn create_encoder_with_output_ctx(
     codec: codec::Audio,
     output_ctx: &mut format::context::Output,
@@ -75,7 +68,7 @@ pub fn create_encoder_with_output_ctx(
     sample_rate: i32,
     bit_rate: usize,
     max_bit_rate: usize,
-) -> Result<encoder::Audio> {
+) -> Result<(encoder::Audio, format::stream::StreamMut)> {
     let global = output_ctx
         .format()
         .flags()
@@ -114,5 +107,5 @@ pub fn create_encoder_with_output_ctx(
     let encoder = encoder.open_as(codec)?;
     output.set_parameters(&encoder);
 
-    Ok(encoder)
+    Ok((encoder, output))
 }

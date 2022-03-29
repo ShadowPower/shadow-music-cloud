@@ -25,13 +25,7 @@ impl Transcoder {
     ) -> Result<()> {
         let mut filtered = frame::Audio::empty();
         // 从音频滤镜接收解码后的帧
-        while filter
-            .get("out")
-            .unwrap()
-            .sink()
-            .frame(&mut filtered)
-            .is_ok()
-        {
+        while filter.get("out").unwrap().sink().frame(&mut filtered).is_ok() {
             // 发送给编码器处理
             encoder.send_frame(&filtered)?;
             Transcoder::receive_and_process_encoded_packet(decoder, encoder, output_time_base, output_ctx)?;
@@ -69,7 +63,9 @@ impl Transcoder {
             decoded.set_pts(timestamp);
 
             // 发送给音频滤镜
-            filter.get("in").unwrap().source().flush().unwrap();
+            // fixme: invalid argument
+            filter.get("in").unwrap().source().add(&decoded)?;
+            filter.get("in").unwrap().source().flush()?;
             Transcoder::process_filtered_frames(filter, decoder, encoder, output_time_base, output_ctx)?;
         }
         Ok(())

@@ -65,7 +65,8 @@ pub fn create_encoder_with_output_ctx(
     codec: codec::Audio,
     output_ctx: &mut format::context::Output,
     channels: i32,
-    sample_rate: i32,
+    source_sample_rate: i32,
+    target_sample_rate: i32,
     bit_rate: usize,
     max_bit_rate: usize,
 ) -> Result<(encoder::Audio, ffmpeg::Rational)> {
@@ -100,9 +101,9 @@ pub fn create_encoder_with_output_ctx(
     encoder.set_bit_rate(bit_rate);
     encoder.set_max_bit_rate(max_bit_rate);
 
-    encoder.set_rate(sample_rate);
-    encoder.set_time_base((1, sample_rate));
-    output.set_time_base((1, sample_rate));
+    encoder.set_rate(target_sample_rate);
+    encoder.set_time_base((1, source_sample_rate));
+    output.set_time_base((1, source_sample_rate));
 
     let encoder = encoder.open_as(codec)?;
     output.set_parameters(&encoder);

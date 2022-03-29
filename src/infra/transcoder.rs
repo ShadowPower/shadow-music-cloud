@@ -91,7 +91,8 @@ impl Transcoder {
 
         // 创建编码器并配置输出上下文
         let (mut encoder, output_time_base) = audio_utils::create_encoder_with_output_ctx(
-            codec, &mut output_ctx, channels, sample_rate, bit_rate, max_bit_rate)?;
+            codec, &mut output_ctx, channels, decoder.rate() as i32,
+            sample_rate, bit_rate, max_bit_rate)?;
 
         // 写文件头
         output_ctx.set_metadata(input_ctx.metadata().to_owned());

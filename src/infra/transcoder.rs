@@ -2,7 +2,7 @@ extern crate ffmpeg_next as ffmpeg;
 
 use std::path::Path;
 
-use anyhow::{Context, Ok, Result};
+use anyhow::{Ok, Result};
 use ffmpeg::{format, frame, Packet};
 
 use super::audio_utils;
@@ -48,7 +48,7 @@ impl Transcoder {
 
         for (stream, mut packet) in input_ctx.packets() {
             // 取出容器内的音频数据
-            if (stream.index() == audio_stream_index) {
+            if stream.index() == audio_stream_index {
                 // 转换时间基
                 packet.rescale_ts(stream.time_base(), decoder.time_base());
                 decoder.send_packet(&packet)?;

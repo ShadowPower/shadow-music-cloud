@@ -37,7 +37,7 @@ impl Transcoder {
         let max_bit_rate = self.max_bit_rate.unwrap_or(decoder.max_bit_rate());
 
         // 创建编码器并配置输出上下文
-        let (mut encoder, output_stream) = audio_utils::create_encoder_with_output_ctx(
+        let (mut encoder, output_time_base) = audio_utils::create_encoder_with_output_ctx(
             codec, &mut output_ctx, channels, sample_rate, bit_rate, max_bit_rate)?;
 
         // 开始转码
@@ -64,7 +64,7 @@ impl Transcoder {
                     let mut encoded = Packet::empty();
                     while encoder.receive_packet(&mut encoded).is_ok() {
                         encoded.set_stream(0);
-                        encoded.rescale_ts(decoder.time_base(), output_stream.time_base());
+                        encoded.rescale_ts(decoder.time_base(), output_time_base);
                         encoded.write_interleaved(&mut output_ctx)?;
                     }
                 }

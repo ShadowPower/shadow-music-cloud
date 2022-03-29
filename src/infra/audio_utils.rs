@@ -60,7 +60,7 @@ pub fn create_codec_by_name(name: &str) -> Result<codec::Audio> {
 /// @param sample_rate 采样率
 /// @param bit_rate 码率
 /// @param max_bit_rate 最大码率
-/// @return 编码器，输出流
+/// @return 编码器，输出时间基
 pub fn create_encoder_with_output_ctx(
     codec: codec::Audio,
     output_ctx: &mut format::context::Output,
@@ -68,7 +68,7 @@ pub fn create_encoder_with_output_ctx(
     sample_rate: i32,
     bit_rate: usize,
     max_bit_rate: usize,
-) -> Result<(encoder::Audio, format::stream::StreamMut)> {
+) -> Result<(encoder::Audio, ffmpeg::Rational)> {
     let global = output_ctx
         .format()
         .flags()
@@ -107,5 +107,5 @@ pub fn create_encoder_with_output_ctx(
     let encoder = encoder.open_as(codec)?;
     output.set_parameters(&encoder);
 
-    Ok((encoder, output))
+    Ok((encoder, output.time_base()))
 }

@@ -8,6 +8,7 @@ use ffmpeg::{format, frame, Packet, decoder, encoder, filter};
 use super::{audio_utils, audio_filter};
 
 pub struct Transcoder {
+    pub output_filter_spec: Option<String>,
     pub codec: Option<String>,
     pub channels: Option<i32>,
     pub sample_rate: Option<i32>,
@@ -98,7 +99,8 @@ impl Transcoder {
         output_ctx.set_metadata(input_ctx.metadata().to_owned());
         output_ctx.write_header()?;
 
-        let mut filter = audio_filter::filter("anull", &decoder, &encoder)?;
+        let filter_spec = self.output_filter_spec.as_deref().unwrap_or("anull");
+        let mut filter = audio_filter::filter(filter_spec, &decoder, &encoder)?;
 
         // 开始转码
         for (stream, mut packet) in input_ctx.packets() {

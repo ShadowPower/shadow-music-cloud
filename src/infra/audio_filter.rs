@@ -21,12 +21,10 @@ pub fn filter(
     filter.add(&filter::find("abuffer").unwrap(), "in", &args)?;
     filter.add(&filter::find("abuffersink").unwrap(), "out", "")?;
 
-    {
-        let mut out = filter.get("out").unwrap();
-        out.set_sample_format(encoder.format());
-        out.set_channel_layout(encoder.channel_layout());
-        out.set_sample_rate(encoder.rate());
-    }
+    let mut out = filter.get("out").unwrap();
+    out.set_sample_format(encoder.format());
+    out.set_channel_layout(encoder.channel_layout());
+    out.set_sample_rate(encoder.rate());
 
     filter.output("in", 0)?.input("out", 0)?.parse(spec)?;
     filter.validate()?;

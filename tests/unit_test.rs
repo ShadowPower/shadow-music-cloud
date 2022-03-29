@@ -90,11 +90,12 @@ fn test_audio_transcode() -> Result<()> {
         path.push(audio_file_info.path.clone());
         println!("{}", audio_file_info.path.display());
         let transcoder = transcoder::Transcoder {
+            output_filter_spec: None,
             codec: Some("libopus".to_string()),
             channels: None,
             sample_rate: Some(48000),
             bit_rate: Some(96000),
-            max_bit_rate: Some(96000),
+            max_bit_rate: Some(320000),
         };
 
         let mut output_path = PathBuf::new();

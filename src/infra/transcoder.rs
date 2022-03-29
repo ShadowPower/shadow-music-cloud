@@ -63,9 +63,7 @@ impl Transcoder {
             decoded.set_pts(timestamp);
 
             // 发送给音频滤镜
-            // fixme: invalid argument
             filter.get("in").unwrap().source().add(&decoded)?;
-            filter.get("in").unwrap().source().flush()?;
             Transcoder::process_filtered_frames(filter, decoder, encoder, output_time_base, output_ctx)?;
         }
         Ok(())
@@ -99,7 +97,7 @@ impl Transcoder {
         output_ctx.set_metadata(input_ctx.metadata().to_owned());
         output_ctx.write_header()?;
 
-        let mut filter = audio_filter::filter("anull", &mut decoder, &mut encoder)?;
+        let mut filter = audio_filter::filter("anull", &decoder, &encoder)?;
 
         // 开始转码
         for (stream, mut packet) in input_ctx.packets() {

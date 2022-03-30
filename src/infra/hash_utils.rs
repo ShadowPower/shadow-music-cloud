@@ -1,4 +1,4 @@
-use std::{hash::Hasher, path::PathBuf};
+use std::{hash::Hasher, path::PathBuf, io::Read};
 
 use ffmpeg_next::format;
 use xxhash_rust::xxh3::Xxh3;
@@ -51,6 +51,23 @@ pub fn hash_audio_data(file_path: &PathBuf) -> Result<u128> {
         }
     } else {
         return Err(anyhow!("No audio stream found"));
+    }
+    Ok(hasher.digest128())
+}
+
+/// 计算文件的 Hash 值
+/// @param file_path 文件路径
+/// @return Hash 值
+pub fn hash_file(file_path: &PathBuf) -> Result<u128> {
+    let mut hasher = Xxh3::with_seed(HASH_SEED);
+    let mut file = std::fs::File::open(file_path)?;
+    let mut buffer = [0u8; 256];
+    loop {
+        let read_size = file.read(&mut buffer)?;
+        if read_size == 0 {
+            break;
+        }
+        hasher.write(&buffer[0..read_size]);
     }
     Ok(hasher.digest128())
 }

@@ -88,9 +88,9 @@ fn test_audio_transcode() -> Result<()> {
         let path = PathBuf::from(app_config::AUDIO_PATH).join(&audio_file_info.path);
         println!("{}", audio_file_info.path.display());
         let transcoder = transcoder::Transcoder {
-            output_filter_spec: None,
+            output_filter_spec: Some("aresample=resampler=soxr".to_string()),
             codec: Some("libopus".to_string()),
-            channels: None,
+            channels: Some(2),
             sample_rate: Some(48000),
             bit_rate: Some(96000),
             max_bit_rate: Some(320000),
@@ -98,12 +98,10 @@ fn test_audio_transcode() -> Result<()> {
 
         let mut output_path = PathBuf::new();
         output_path.push(Path::new(app_config::OTHER_AUDIO_QUALITY_PATH));
-
-        fs::create_dir_all(&output_path).unwrap();
-
         let mut output_file_path = audio_file_info.path.clone();
         output_file_path.set_extension("opus");
         output_path.push(output_file_path);
+        fs::create_dir_all(&output_path.parent().unwrap()).unwrap();
         transcoder.transcode(&path, &output_path).unwrap();
     });
     Ok(())

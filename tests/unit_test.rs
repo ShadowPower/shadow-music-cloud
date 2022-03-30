@@ -83,12 +83,14 @@ fn test_audio_hash() -> Result<()> {
 
 #[test]
 fn test_audio_transcode() -> Result<()> {
+    ffmpeg_next::util::log::set_level(ffmpeg_next::util::log::Level::Error);
     let audio_file_info_list = file_utils::list_audio_file();
     audio_file_info_list.par_iter().for_each(|audio_file_info| {
         let path = PathBuf::from(app_config::AUDIO_PATH).join(&audio_file_info.path);
-        println!("{}", audio_file_info.path.display());
+        //println!("{}", audio_file_info.path.display());
         let transcoder = transcoder::Transcoder {
-            output_filter_spec: Some("aresample=resampler=soxr".to_string()),
+            // output_filter_spec: Some("aresample=resampler=soxr".to_string()),
+            output_filter_spec: None,
             codec: Some("libopus".to_string()),
             channels: Some(2),
             sample_rate: Some(48000),
@@ -102,7 +104,10 @@ fn test_audio_transcode() -> Result<()> {
         output_file_path.set_extension("opus");
         output_path.push(output_file_path);
         fs::create_dir_all(&output_path.parent().unwrap()).unwrap();
+        let start = std::time::SystemTime::now();
         transcoder.transcode(&path, &output_path).unwrap();
+        let end = std::time::SystemTime::now();
+        println!("{}, {}", end.duration_since(start).unwrap().as_secs(), audio_file_info.path.display());
     });
     Ok(())
 }

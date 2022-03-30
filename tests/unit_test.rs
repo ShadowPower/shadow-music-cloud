@@ -85,9 +85,7 @@ fn test_audio_hash() -> Result<()> {
 fn test_audio_transcode() -> Result<()> {
     let audio_file_info_list = file_utils::list_audio_file();
     audio_file_info_list.par_iter().for_each(|audio_file_info| {
-        let mut path = PathBuf::new();
-        path.push(Path::new(app_config::AUDIO_PATH));
-        path.push(audio_file_info.path.clone());
+        let path = PathBuf::from(app_config::AUDIO_PATH).join(&audio_file_info.path);
         println!("{}", audio_file_info.path.display());
         let transcoder = transcoder::Transcoder {
             output_filter_spec: None,

@@ -39,6 +39,7 @@ pub fn list_audio_file() -> Vec<SimpleFileInfo> {
 /// @param entry DirEntry
 /// @returns 文件信息结构体
 fn dir_entry_to_simple_file_info(dir_entry: &DirEntry) -> SimpleFileInfo {
+    // 得到相对于媒体目录的路径，实际使用时需要拼接
     let path = dir_entry.path().strip_prefix(app_config::AUDIO_PATH).unwrap();
     let metadata = dir_entry.metadata().unwrap();
     let size = metadata.len();

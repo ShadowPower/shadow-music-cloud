@@ -25,6 +25,8 @@ pub struct MediaInfo {
     pub index_time: u64,
     /// 时长（毫秒）
     pub duration: u64,
+    /// 比特率（比特每秒）
+    pub bitrate: u64,
 }
 
 /// 文件信息
@@ -59,6 +61,8 @@ pub struct SimpleFileInfo {
     pub path: PathBuf,
     pub size: u64,
     pub last_modified: u128,
+    /// 文件路径+大小+修改时间 Hash
+    pub file_info_hash: Option<String>,
 }
 
 impl SimpleFileInfo {
@@ -67,6 +71,7 @@ impl SimpleFileInfo {
             path: path.to_path_buf(),
             size: size,
             last_modified: last_modified,
+            file_info_hash: None,
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 
 use once_cell::sync::Lazy;
 use sled::Db;
@@ -29,6 +29,15 @@ pub fn list() -> HashMap<String, FileInfo> {
         let (key, value) = item.unwrap();
         let file_info: FileInfo = serde_json::from_slice(&value).unwrap();
         file_infos.insert(String::from_utf8(key.to_vec()).unwrap(), file_info);
+    }
+    file_infos
+}
+
+pub fn list_key() -> HashSet<String> {
+    let mut file_infos: HashSet<String> = HashSet::new();
+    for item in FILE_INFO_DB.iter() {
+        let (key, _) = item.unwrap();
+        file_infos.insert(String::from_utf8(key.to_vec()).unwrap());
     }
     file_infos
 }

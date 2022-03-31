@@ -1,8 +1,11 @@
 use std::{
-    path::{PathBuf, Path}
+    path::{PathBuf, Path}, ffi::OsStr
 };
 
+use radix_fmt::radix;
 use serde::{Deserialize, Serialize};
+
+use crate::infra::hash_utils;
 
 /// 媒体信息
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,7 +53,7 @@ pub struct FileInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cue_media_file_info_hash: Option<String>,
     /// 专辑封面 Hash
-    pub cover_hash: String,
+    pub cover_hash: Option<String>,
     /// 媒体文件信息
     pub medias: Vec<MediaInfo>,
 }
@@ -72,6 +75,30 @@ impl SimpleFileInfo {
             size: size,
             last_modified: last_modified,
             file_info_hash: None,
+        }
+    }
+}
+
+impl FileInfo {
+    pub fn from_simple(simple: &SimpleFileInfo) -> FileInfo {
+        FileInfo {
+            path: simple.path.components()
+                .map(|x| x.as_os_str().to_string_lossy().into_owned())
+                .collect(),
+            file_type: if simple.path.extension() == Some(OsStr::new("cue")) {
+                "cuesheet".to_string()
+            } else {
+                "audio".to_string()
+            },
+            size: simple.size,
+            last_modified: simple.last_modified,
+            file_info_hash: simple.file_info_hash.as_ref().unwrap_or({
+                &radix(hash_utils::hash_media_file_info(simple), 36).to_string()
+            }).to_string(),
+            cue_media_path: None,
+            cue_media_file_info_hash: None,
+            cover_hash: None,
+            medias: vec![],
         }
     }
 }

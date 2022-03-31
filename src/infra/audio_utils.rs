@@ -110,3 +110,17 @@ pub fn create_encoder_with_output_ctx(
 
     Ok((encoder, output.time_base()))
 }
+
+// ---- 文件信息 ----
+
+/// 从媒体文件中获取标签
+/// @param file_path 媒体文件路径
+/// @return 标签
+pub fn get_tags_from_media_file<P: AsRef<Path>>(file_path: &P) -> Result<lofty::Tag> {
+    let tagged_file = lofty::Probe::open(file_path)?.read(true)?;
+
+    let tag = tagged_file.primary_tag()
+        .unwrap_or(tagged_file.first_tag().with_context(|| "No tags found")?);
+
+    Ok(tag.clone())
+}

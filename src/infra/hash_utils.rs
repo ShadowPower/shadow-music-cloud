@@ -71,3 +71,12 @@ pub fn hash_file(file_path: &PathBuf) -> Result<u128> {
     }
     Ok(hasher.digest128())
 }
+
+/// 计算数据的 Hash 值
+/// @param data 数据
+/// @return Hash 值
+pub fn hash_data(data: &[u8]) -> u128 {
+    let mut hasher = Xxh3::with_seed(HASH_SEED);
+    hasher.write(data);
+    hasher.digest128()
+}

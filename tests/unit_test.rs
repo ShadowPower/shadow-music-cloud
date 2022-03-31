@@ -125,11 +125,19 @@ fn test_storage() {
         file_info_hash: "TestData".to_string(),
         cue_media_path: None,
         cue_media_file_info_hash: None,
-        cover_hash: "TestData".to_string(),
+        cover_hash: Some("TestData".to_string()),
         medias: vec![],
     };
 
     file_info::set("TestData".to_string(), &test_data);
     let data_from_storage = file_info::get("TestData".to_string()).unwrap();
     println!("{:?}", data_from_storage);
+}
+
+#[test]
+fn test_media_info() {
+    let audio_file_info_list = file_utils::list_audio_file();
+    audio_file_info_list.iter().for_each(|audio_file_info| {
+        println!("{:?} \n", FileInfo::from_simple(audio_file_info));
+    });
 }

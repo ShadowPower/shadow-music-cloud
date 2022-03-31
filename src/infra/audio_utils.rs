@@ -4,6 +4,7 @@ use std::path::Path;
 
 use anyhow::{Context, Ok, Result};
 use ffmpeg::{codec, decoder, encoder, format, media, Stream};
+use lofty::FileProperties;
 
 /// 获取最佳音频流索引
 /// @param input_ctx 输入媒体文件上下文
@@ -123,4 +124,11 @@ pub fn get_tags_from_media_file<P: AsRef<Path>>(file_path: &P) -> Result<lofty::
         .unwrap_or(tagged_file.first_tag().with_context(|| "No tags found")?);
 
     Ok(tag.clone())
+}
+
+/// 从媒体文件中获取属性
+/// @param file_path 媒体文件路径
+/// @return 属性
+pub fn get_properties_from_media_file<P: AsRef<Path>>(file_path: &P) -> Result<lofty::FileProperties> {
+    Ok(lofty::Probe::open(file_path)?.read(true)?.properties().clone())
 }

@@ -12,7 +12,7 @@ use shadow_music_cloud::repository::file_info;
 use shadow_music_cloud::{
     action,
     command::actor::act,
-    infra::transcoder::{self},
+    infra::transcoder,
     model::dto::FileInfo,
 };
 use shadow_music_cloud::{
@@ -137,7 +137,7 @@ fn test_storage() {
 #[test]
 fn test_media_info() {
     let audio_file_info_list = file_utils::list_audio_file();
-    audio_file_info_list.iter().for_each(|audio_file_info| {
+    audio_file_info_list.par_iter().for_each(|audio_file_info| {
         println!("{:?} \n", FileInfo::from_simple(audio_file_info));
     });
 }

@@ -64,36 +64,9 @@ impl Command for CleanStorage {
             // 清理旧的文件信息
             let old_file_info_hash_set = file_info::list_key();
             old_file_info_hash_set.into_iter().for_each(|old_file_info_hash| {
-                match file_info::get(&old_file_info_hash) {
-                    Some(old_file_info) => {
-                        if file_info_hash_set.contains(&old_file_info_hash) {
-                            // 删除低音质文件
-                            if !old_file_info.file_info_hash.is_empty() {
-                                let audio_file_path = PathBuf::from(&app_config::AUDIO_PATH)
-                                    .join(old_file_info.file_info_hash);
-                                if fs::remove_file(&audio_file_path).is_err() {
-                                    println!("删除低音质音频文件失败：{}", &audio_file_path.display());
-                                }
-                            }
-                            // 删除专辑封面
-                            if let Some(cover_hash) = old_file_info.cover_hash {
-                                let origin_cover_path = PathBuf::from(&app_config::ORIGIN_COVER_PATH)
-                                    .join(&cover_hash);
-                                if fs::remove_file(&origin_cover_path).is_err() {
-                                    println!("删除原始封面失败：{}", &origin_cover_path.display());
-                                }
-
-                                let small_cover_path = PathBuf::from(&app_config::SMALL_COVER_PATH)
-                                    .join(&cover_hash);
-                                if fs::remove_file(&small_cover_path).is_err() {
-                                    println!("删除封面缩略图失败：{}", &small_cover_path.display());
-                                }
-                            }
-                            // 删除数据库中的文件信息
-                            file_info::remove(&old_file_info_hash);
-                        }
-                    },
-                    None => {},
+                if file_info_hash_set.contains(&old_file_info_hash) {
+                    // 删除数据库中的文件信息
+                    file_info::remove(&old_file_info_hash);
                 }
             });
         }

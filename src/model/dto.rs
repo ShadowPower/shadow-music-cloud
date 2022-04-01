@@ -83,6 +83,8 @@ impl SimpleFileInfo {
 }
 
 impl FileInfo {
+    /// 从简略文件信息生成媒体文件信息
+    /// 会将专辑封面保存到文件
     pub fn from_simple(simple: &SimpleFileInfo) -> FileInfo {
         // 注：目前不支持 cuesheet 文件
         let mut media_info = MediaInfo::default();
@@ -132,7 +134,7 @@ impl FileInfo {
                     let cover_picture = tag.get_picture_type(lofty::PictureType::CoverFront)
                         .unwrap_or(first_picture);
                     let picture_data_hash = radix(hash_utils::hash_data(cover_picture.data()), 36).to_string();
-                    let cover_path = PathBuf::from(config::app_config::COVER_PATH).join(&picture_data_hash);
+                    let cover_path = PathBuf::from(config::app_config::ORIGIN_COVER_PATH).join(&picture_data_hash);
                     cover_hash = Some(picture_data_hash);
                     // 保存专辑封面到文件
                     if !cover_path.exists() {

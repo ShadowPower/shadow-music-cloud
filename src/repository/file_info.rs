@@ -13,7 +13,7 @@ static FILE_INFO_DB: Lazy<Db> = Lazy::new(|| {
     sled::open(FILE_INFO_STORAGE_PATH).unwrap()
 });
 
-pub fn get(file_info_hash: String) -> Option<FileInfo> {
+pub fn get(file_info_hash: &String) -> Option<FileInfo> {
     match FILE_INFO_DB.get(file_info_hash) {
         Ok(Some(value)) => {
             let file_info: FileInfo = serde_json::from_slice(&value).unwrap();
@@ -42,12 +42,12 @@ pub fn list_key() -> HashSet<String> {
     file_infos
 }
 
-pub fn set(file_info_hash: String, file_info: &FileInfo) {
+pub fn set(file_info_hash: &String, file_info: &FileInfo) {
     let value = serde_json::to_vec(file_info).unwrap();
     FILE_INFO_DB.insert(file_info_hash, value).unwrap();
 }
 
-pub fn remove(file_info_hash: String) {
+pub fn remove(file_info_hash: &String) {
     FILE_INFO_DB.remove(file_info_hash).unwrap();
 }
 
@@ -61,14 +61,14 @@ pub fn sync(data: &HashMap<String, FileInfo>) {
         let (file_info_hash, _) = item.unwrap();
         let file_info_hash = std::str::from_utf8(&file_info_hash).unwrap().to_string();
         if !data.contains_key(&file_info_hash) {
-            remove(file_info_hash);
+            remove(&file_info_hash);
         }
     }
     // 添加
     for item in data.iter() {
         let (file_info_hash, file_info) = item;
         if !FILE_INFO_DB.contains_key(file_info_hash).unwrap() {
-            set(file_info_hash.to_string(), file_info);
+            set(file_info_hash, file_info);
         }
     }
 }

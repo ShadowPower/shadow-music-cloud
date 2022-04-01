@@ -4,7 +4,6 @@ use std::path::Path;
 
 use anyhow::{Context, Ok, Result};
 use ffmpeg::{codec, decoder, encoder, format, media, Stream};
-use lofty::FileProperties;
 
 /// 获取最佳音频流索引
 /// @param input_ctx 输入媒体文件上下文

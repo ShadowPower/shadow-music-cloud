@@ -129,8 +129,8 @@ fn test_storage() {
         medias: vec![],
     };
 
-    file_info::set("TestData".to_string(), &test_data);
-    let data_from_storage = file_info::get("TestData".to_string()).unwrap();
+    file_info::set(&"TestData".to_string(), &test_data);
+    let data_from_storage = file_info::get(&"TestData".to_string()).unwrap();
     println!("{:?}", data_from_storage);
 }
 

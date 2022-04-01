@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use crate::model::dto::SimpleFileInfo;
+use crate::model::dto::{SimpleFileInfo, FileInfo};
 
 use super::command::Command;
 
 #[derive(Debug)]
 pub enum ContextData {
     String(String),
-    FileList(Vec<SimpleFileInfo>),   
+    FileList(Vec<SimpleFileInfo>),
+    FileInfo(Vec<FileInfo>),
 }
 
 /// 动作

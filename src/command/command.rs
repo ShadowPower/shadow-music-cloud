@@ -1,7 +1,7 @@
-use anyhow::Result;
+use anyhow::{Result, Ok};
 use radix_fmt::radix;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator, IntoParallelRefMutIterator, IntoParallelIterator};
-use std::{collections::{HashMap, HashSet}, path::PathBuf};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator, IntoParallelRefMutIterator};
+use std::{collections::{HashMap, HashSet}, fs, path::PathBuf};
 
 use crate::{
     infra::{file_utils, hash_utils},
@@ -51,30 +51,69 @@ impl Command for CalcFileInfoHash {
     }
 }
 
-/// 生成详细的文件信息
-struct GenAndStorageFileInfo;
-impl Command for GenAndStorageFileInfo {
+/// 清理旧数据
+struct CleanStorage;
+impl Command for CleanStorage {
     fn execute(&self, context: &mut HashMap<&str, ContextData>) -> Result<()> {
         if let ContextData::FileList(simple_file_list) = context.get("simple_file_list").unwrap() {
             // 获取文件 Hash 集合
-            let file_info_hash_set: HashSet<String> = simple_file_list.iter().map(|file_info| {
-                file_info.file_info_hash.as_ref().unwrap().clone()
+            let file_info_hash_set: HashSet<String> = simple_file_list.iter().map(|simple_file_info| {
+                simple_file_info.file_info_hash.as_ref().unwrap().clone()
             }).collect();
 
             // 清理旧的文件信息
             let old_file_info_hash_set = file_info::list_key();
             old_file_info_hash_set.into_iter().for_each(|old_file_info_hash| {
-                if !file_info_hash_set.contains(&old_file_info_hash) {
-                    file_info::remove(old_file_info_hash);
-                }
-            });
+                match file_info::get(&old_file_info_hash) {
+                    Some(old_file_info) => {
+                        if file_info_hash_set.contains(&old_file_info_hash) {
+                            // 删除低音质文件
+                            if !old_file_info.file_info_hash.is_empty() {
+                                let audio_file_path = PathBuf::from(&app_config::AUDIO_PATH)
+                                    .join(old_file_info.file_info_hash);
+                                if fs::remove_file(&audio_file_path).is_err() {
+                                    println!("删除低音质音频文件失败：{}", &audio_file_path.display());
+                                }
+                            }
+                            // 删除专辑封面
+                            if let Some(cover_hash) = old_file_info.cover_hash {
+                                let origin_cover_path = PathBuf::from(&app_config::ORIGIN_COVER_PATH)
+                                    .join(&cover_hash);
+                                if fs::remove_file(&origin_cover_path).is_err() {
+                                    println!("删除原始封面失败：{}", &origin_cover_path.display());
+                                }
 
-            // 生成详细的文件信息
-            simple_file_list.par_iter().map(|simple_file_info| {
-                todo!()
+                                let small_cover_path = PathBuf::from(&app_config::SMALL_COVER_PATH)
+                                    .join(&cover_hash);
+                                if fs::remove_file(&small_cover_path).is_err() {
+                                    println!("删除封面缩略图失败：{}", &small_cover_path.display());
+                                }
+                            }
+                            // 删除数据库中的文件信息
+                            file_info::remove(&old_file_info_hash);
+                        }
+                    },
+                    None => {},
+                }
             });
         }
         
+        Ok(())
+    }
+}
+
+/// 生成详细的媒体信息并存储，同时提取专辑封面
+struct GenerateStorage;
+impl Command for GenerateStorage {
+    fn execute(&self, context: &mut HashMap<&str, ContextData>) -> Result<()> {
+        if let ContextData::FileList(simple_file_list) = context.get("simple_file_list").unwrap() {
+            // 生成详细的文件信息
+            let file_info_list: Vec<FileInfo> = simple_file_list.par_iter()
+                .map(FileInfo::from_simple)
+                .collect();
+
+            context.insert("file_info", ContextData::FileInfo(file_info_list));
+        }
         Ok(())
     }
 }
